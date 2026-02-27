@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catch My Heart ❤️</title>
+
+<style>
+body{
+    margin:0;
+    overflow:hidden;
+    background: linear-gradient(to top, #ff9a9e, #fad0c4);
+    font-family: 'Segoe UI', cursive;
+    text-align:center;
+    touch-action:none; /* Prevent scrolling on touch */
+}
+
+h1{
+    color:white;
+    margin-top:10px;
+}
+
+#score, #lives{
+    color:white;
+    font-size:22px;
+    font-weight:bold;
+}
+
+#message{
+    position:absolute;
+    width:100%;
+    top:40%;
+    font-size:38px;
+    color:white;
+    opacity:0;
+    pointer-events:none;
+    text-shadow:0 0 20px red;
+}
+
+.showMessage{
+    animation: fadeFloat 3s ease forwards;
+}
+
+@keyframes fadeFloat{
+    0%{ opacity:0; transform:translateY(50px) scale(0.5); }
+    30%{ opacity:1; transform:translateY(0px) scale(1.2); }
+    100%{ opacity:0; transform:translateY(-50px) scale(1); }
+}
+
+#gameCanvas{
+    display:block;
+    margin:auto;
+}
+
+#gameOver{
+    position:absolute;
+    width:100%;
+    top:40%;
+    font-size:50px;
+    color:white;
+    display:none;
+}
+
+#restartBtn{
+    display:none;
+    position:absolute;
+    top:55%;
+    left:50%;
+    transform:translateX(-50%);
+    padding:12px 25px;
+    font-size:20px;
+    border:none;
+    border-radius:25px;
+    background:white;
+    color:#ff4b6e;
+    cursor:pointer;
+    font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<h1>Catch My Heart ❤️</h1>
+
+<div id="score">Score: 0</div>
+<div id="lives">Lives: ❤️❤️❤️❤️❤️</div>
+
+<div id="message"></div>
+<div id="gameOver">Game Over 💔</div>
+<button id="restartBtn">Restart ❤️</button>
+
+<canvas id="gameCanvas" width="400" height="600"></canvas>
+
+<script>
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let basket = {
+    x: canvas.width/2 - 40,
+    y: canvas.height - 60,
+    width: 80,
+    height: 30,
+    speed: 8
+};
+
+let hearts = [];
+let score = 0;
+let lives = 5;
+let lastMilestoneShown = 0;
+
+const messages = [
+"You make my world beautiful ❤️",
+"I fall for you more every day 💕",
+"You are my dream come true 💖",
+"My heart belongs to you 💘",
+"You are my forever ❤️",
+"I love you endlessly 💞",
+"You complete me 💓",
+"My favorite place is with you 💗",
+"You are my sunshine ☀️❤️",
+"Forever yours 💍❤️"
+];
+
+const specialMessage =
+"Nabila, you caught Faiyaz's heart forever ❤️";
+
+function showMessage(text){
+    const msgDiv = document.getElementById("message");
+    msgDiv.innerText = text;
+    msgDiv.classList.remove("showMessage");
+    void msgDiv.offsetWidth;
+    msgDiv.classList.add("showMessage");
+}
+
+function updateLives(){
+    let heartString = "";
+    for(let i=0;i<lives;i++){
+        heartString += "❤️";
+    }
+    document.getElementById("lives").innerText =
+    "Lives: " + heartString;
+}
+
+function createHeart(){
+    hearts.push({
+        x: Math.random() * (canvas.width - 30),
+        y: -30,
+        size: 25,
+        speed: 2 + Math.random()*2
+    });
+}
+
+function drawHeart(x, y, size){
+    ctx.fillStyle = "red";
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.bezierCurveTo(
+        x + size/2, y - size/2,
+        x + size, y + size/3,
+        x, y + size
+    );
+    ctx.bezierCurveTo(
+        x - size, y + size/3,
+        x - size/2, y - size/2,
+        x, y
+    );
+    ctx.fill();
+}
+
+function drawBasket(){
+    ctx.fillStyle = "white";
+    ctx.fillRect(basket.x, basket.y, basket.width, basket.height);
+    ctx.strokeStyle = "pink";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(basket.x, basket.y, basket.width, basket.height);
+}
+
+function updateHearts(){
+    for(let i=hearts.length-1;i>=0;i--){
+        let heart = hearts[i];
+        heart.y += heart.speed;
+
+        if(
+            heart.y + heart.size > basket.y &&
+            heart.x > basket.x &&
+            heart.x < basket.x + basket.width
+        ){
+            hearts.splice(i,1);
+            score++;
+            document.getElementById("score").innerText = "Score: " + score;
+
+            if(score % 10 === 0 && score !== lastMilestoneShown){
+                lastMilestoneShown = score;
+
+                if(score === 100){
+                    showMessage(specialMessage);
+                    setTimeout(()=>{
+                        document.getElementById("restartBtn").style.display = "block";
+                    }, 2500);
+                } else {
+                    let randomMsg =
+                    messages[Math.floor(Math.random()*messages.length)];
+                    showMessage(randomMsg);
+                }
+            }
+        }
+        else if(heart.y > canvas.height){
+            hearts.splice(i,1);
+            lives--;
+            updateLives();
+
+            if(lives <= 0){
+                document.getElementById("gameOver").style.display = "block";
+                document.getElementById("restartBtn").style.display = "block";
+                return;
+            }
+        }
+    }
+}
+
+function drawHearts(){
+    hearts.forEach(heart =>
+        drawHeart(heart.x, heart.y, heart.size)
+    );
+}
+
+function gameLoop(){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawBasket();
+    updateHearts();
+    drawHearts();
+    if(lives > 0){
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+function restartGame(){
+    score = 0;
+    lives = 5;
+    hearts = [];
+    lastMilestoneShown = 0;
+    basket.x = canvas.width/2 - basket.width/2;
+
+    document.getElementById("gameOver").style.display = "none";
+    document.getElementById("restartBtn").style.display = "none";
+    document.getElementById("score").innerText = "Score: 0";
+    updateLives();
+    gameLoop();
+}
+
+/* =========================
+   CONTROLS
+========================= */
+
+// Keyboard
+document.addEventListener("keydown", e=>{
+    if(e.key === "ArrowLeft") basket.x -= basket.speed;
+    if(e.key === "ArrowRight") basket.x += basket.speed;
+});
+
+// Mouse
+canvas.addEventListener("mousemove", e=>{
+    const rect = canvas.getBoundingClientRect();
+    basket.x = e.clientX - rect.left - basket.width/2;
+});
+
+// TOUCH (Mobile Support)
+canvas.addEventListener("touchstart", moveTouch, {passive:false});
+canvas.addEventListener("touchmove", moveTouch, {passive:false});
+
+function moveTouch(e){
+    e.preventDefault(); // stop scrolling
+    const rect = canvas.getBoundingClientRect();
+    const touch = e.touches[0];
+    basket.x = touch.clientX - rect.left - basket.width/2;
+}
+
+// Restart
+document.getElementById("restartBtn")
+.addEventListener("click", restartGame);
+
+updateLives();
+setInterval(createHeart, 700);
+gameLoop();
+
+</script>
+</body>
+</html>
